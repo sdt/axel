@@ -1,0 +1,13 @@
+version: '2'
+services:
+    nginx:
+        build:
+            context: ./nginx
+        image: axel-testing/nginx
+        ports:
+            - "10080:80"
+            - "10443:443"
+    squid:
+        image: sameersbn/squid:3.3.8-11
+        ports:
+            - "13128:3128"
