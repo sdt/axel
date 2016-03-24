@@ -1,13 +1,25 @@
 version: '2'
 services:
     nginx:
+        container_name: axel-http
         build:
             context: ./nginx
         image: axel-testing/nginx
         ports:
             - "10080:80"
             - "10443:443"
+    pure-ftpd:
+        container_name: axel-ftp
+        build:
+            context: ./pure-ftpd
+        image: axel-testing/pure-ftpd
+        environment:
+            PUBLICHOST: 192.168.99.100
+        ports:
+            - "10021:21"
+            - "30000-30009:30000-30009"
     squid:
+        container_name: axel-proxy
         image: sameersbn/squid:3.3.8-11
         ports:
             - "13128:3128"
