@@ -69,6 +69,16 @@ SSL* ssl_connect( int fd, char *message )
 	return ssl;
 }
 
+int ssl_read( ssl_t *ssl, void *buf, int bytes )
+{
+	return SSL_read( ssl, buf, bytes );
+}
+
+int ssl_write( ssl_t *ssl, void *buf, int bytes )
+{
+	return SSL_write( ssl, buf, bytes );
+}
+
 void ssl_disconnect( SSL *ssl )
 {
 	SSL_shutdown( ssl );

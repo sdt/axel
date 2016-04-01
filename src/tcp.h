@@ -21,8 +21,8 @@
 /* TCP control include file */
 
 typedef struct {
-	int fd;
-	SSL *ssl;
+	int    fd;
+	ssl_t *ssl;
 } tcp_t;
 
 int tcp_connect( tcp_t *tcp, char *hostname, int port, int secure, char *local_if, char *message );

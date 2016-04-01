@@ -118,7 +118,7 @@ int tcp_connect( tcp_t *tcp, char *hostname, int port, int secure, char *local_i
 int tcp_read( tcp_t *tcp, void *buffer, int size )
 {
 	if (tcp->ssl != NULL)
-		return SSL_read(tcp->ssl, buffer, size);
+		return ssl_read(tcp->ssl, buffer, size);
 	else
 		return read(tcp->fd, buffer, size);
 }
@@ -126,7 +126,7 @@ int tcp_read( tcp_t *tcp, void *buffer, int size )
 int tcp_write( tcp_t *tcp, void *buffer, int size )
 {
 	if (tcp->ssl != NULL)
-		return SSL_write(tcp->ssl, buffer, size);
+		return ssl_write(tcp->ssl, buffer, size);
 	else
 		return write(tcp->fd, buffer, size);
 }

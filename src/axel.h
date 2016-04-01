@@ -77,11 +77,11 @@ typedef message_t url_t;
 typedef message_t if_t;
 
 #include "conf.h"
+#include "ssl.h"
 #include "tcp.h"
 #include "ftp.h"
 #include "http.h"
 #include "conn.h"
-#include "ssl.h"
 #include "search.h"
 
 #define min( a, b )		( (a) < (b) ? (a) : (b) )
