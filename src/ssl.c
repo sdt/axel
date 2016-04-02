@@ -26,10 +26,9 @@
 
 #include "axel.h"
 
-#include <openssl/err.h>
-
-static SSL_CTX *ssl_ctx = NULL;
+static int done_startup = 0;
 static conf_t *conf = NULL;
+static gnutls_certificate_credentials_t xcred;
 
 void ssl_init( conf_t *global_conf )
 {
@@ -38,49 +37,68 @@ void ssl_init( conf_t *global_conf )
 
 void ssl_startup( void )
 {
-	if( ssl_ctx != NULL )
+	if( done_startup )
 		return;
 
-	SSL_library_init();
-	SSL_load_error_strings();
+	gnutls_global_init();
+	gnutls_certificate_allocate_credentials( &xcred );
+	gnutls_certificate_set_x509_trust_file( xcred, "pcks11:",
+		GNUTLS_X509_FMT_PEM );
 
+/*
 	ssl_ctx = SSL_CTX_new( SSLv23_client_method() );
 	if( !conf->insecure ) {
 		SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
 		SSL_CTX_set_verify_depth(ssl_ctx, 0);
 	}
+*/
+
+	done_startup = 1;
 }
 
-SSL* ssl_connect( int fd, char *message )
+int ssl_connect( tcp_t *tcp, char *hostname, char *message )
 {
-	SSL* ssl;
+	int ret;
 
 	ssl_startup();
+	gnutls_init( &tcp->ssl, GNUTLS_CLIENT );
+	gnutls_set_default_priority( tcp->ssl );
+	gnutls_credentials_set( tcp->ssl, GNUTLS_CRD_CERTIFICATE, xcred );
+	gnutls_transport_set_int( tcp->ssl, tcp->fd );
+	gnutls_handshake_set_timeout( tcp->ssl, GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT );
 
-	ssl = SSL_new( ssl_ctx );
-	SSL_set_fd( ssl, fd );
+	for( ; ; ) {
+		ret = gnutls_handshake( tcp->ssl );
 
-	int err = SSL_connect( ssl );
-	if( err <= 0 ) {
-		sprintf(message, _("SSL error: %s\n"), ERR_reason_error_string(ERR_get_error()));
-		return NULL;
+		if( ret >= 0 ) {
+			return 1;
+		}
+
+		if( gnutls_error_is_fatal( ret ) ) {
+			fprintf(stderr, "*** Handshake failed\n");
+			gnutls_perror( ret );
+			close( tcp->fd );
+			tcp->fd = -1;
+			gnutls_deinit( tcp->ssl );
+			return 0;
+		}
 	}
-
-	return ssl;
 }
 
-int ssl_read( ssl_t *ssl, void *buf, int bytes )
+int ssl_read( tcp_t *tcp, void *buf, int bytes )
 {
-	return SSL_read( ssl, buf, bytes );
+	return gnutls_record_recv( tcp->ssl, buf, bytes );
 }
 
-int ssl_write( ssl_t *ssl, void *buf, int bytes )
+int ssl_write( tcp_t *tcp, void *buf, int bytes )
 {
-	return SSL_write( ssl, buf, bytes );
+	return gnutls_record_send( tcp->ssl, buf, bytes );
 }
 
-void ssl_disconnect( SSL *ssl )
+void ssl_disconnect( tcp_t *tcp )
 {
-	SSL_shutdown( ssl );
-	SSL_free( ssl );
+	gnutls_bye( tcp->ssl, GNUTLS_SHUT_RDWR );
+	close( tcp->fd );
+	tcp->fd = -1;
+	gnutls_deinit( tcp->ssl );
 }

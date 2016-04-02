@@ -24,10 +24,12 @@
 
 /* SSL interface */
 
-typedef SSL ssl_t;    /* OpenSSL implementation */
+typedef gnutls_session_t ssl_t;    /* GnuTLS implementation */
+
+typedef struct tcp_t tcp_t;
 
 void ssl_init( conf_t *conf );
-ssl_t* ssl_connect( int fd, char *message );
-int ssl_read( ssl_t *ssl, void *buf, int bytes );
-int ssl_write( ssl_t *ssl, void *buf, int bytes );
-void ssl_disconnect( ssl_t *ssl );
+int ssl_connect( tcp_t *tcp, char *hostname, char *message );
+int ssl_read( tcp_t *tcp, void *buf, int bytes );
+int ssl_write( tcp_t *tcp, void *buf, int bytes );
+void ssl_disconnect( tcp_t *tcp );

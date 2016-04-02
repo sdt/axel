@@ -40,6 +40,7 @@ int tcp_connect( tcp_t *tcp, char *hostname, int port, int secure, char *local_i
 	int ret;
 	int sock_fd = -1;
 
+    tcp->is_secure = secure;
 
 	if (local_if && *local_if) {
 		local_addr.sin_family = AF_INET;
@@ -103,30 +104,28 @@ int tcp_connect( tcp_t *tcp, char *hostname, int port, int secure, char *local_i
 		return -1;
 	}
 
+	tcp->fd = sock_fd;
 	if (secure) {
-		tcp->ssl = ssl_connect(sock_fd, message);
-		if (tcp->ssl == NULL) {
-			close(sock_fd);
+		if (!ssl_connect(tcp, hostname, message)) {
 			return -1;
 		}
 	}
-	tcp->fd = sock_fd;
 
 	return 1;
 }
 
 int tcp_read( tcp_t *tcp, void *buffer, int size )
 {
-	if (tcp->ssl != NULL)
-		return ssl_read(tcp->ssl, buffer, size);
+	if (tcp->is_secure)
+		return ssl_read(tcp, buffer, size);
 	else
 		return read(tcp->fd, buffer, size);
 }
 
 int tcp_write( tcp_t *tcp, void *buffer, int size )
 {
-	if (tcp->ssl != NULL)
-		return ssl_write(tcp->ssl, buffer, size);
+	if (tcp->is_secure)
+		return ssl_write(tcp, buffer, size);
 	else
 		return write(tcp->fd, buffer, size);
 }
@@ -134,8 +133,8 @@ int tcp_write( tcp_t *tcp, void *buffer, int size )
 void tcp_close( tcp_t *tcp )
 {
 	if (tcp->fd > 0) {
-		if (tcp->ssl != NULL)
-			ssl_disconnect(tcp->ssl);
+		if (tcp->is_secure)
+			ssl_disconnect(tcp);
 		else
 			close(tcp->fd);
 		tcp->fd = -1;

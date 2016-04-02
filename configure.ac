@@ -29,11 +29,8 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday inet_ntoa memset select setlocale socket strcasecmp strchr strrchr strstr])
-AC_SEARCH_LIBS([SSL_library_init], [ssl], [], [
-    AC_MSG_ERROR([libssl not found])
-])
-AC_SEARCH_LIBS([ERR_get_error], [crypto], [], [
-    AC_MSG_ERROR([libcrypto not found])
+AC_SEARCH_LIBS([gnutls_init], [gnutls], [], [
+    AC_MSG_ERROR([GnuTLS not found])
 ])
 
 # Add Gettext
