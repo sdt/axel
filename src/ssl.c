@@ -26,6 +26,12 @@
 
 #include "axel.h"
 
+/*
+ *  TODO: this stuff should not be global
+ *
+ *  Need to figure out what is truly global (eg loading the certificates),
+ *  what is per-connection.
+ */
 static int done_startup = 0;
 static conf_t *conf = NULL;
 static gnutls_certificate_credentials_t xcred;
@@ -37,45 +43,43 @@ void ssl_init( conf_t *global_conf )
 
 void ssl_startup( void )
 {
+	int ret;
+
 	if( done_startup )
 		return;
 
 	gnutls_global_init();
 	gnutls_certificate_allocate_credentials( &xcred );
-	gnutls_certificate_set_x509_trust_file( xcred, "pcks11:",
-		GNUTLS_X509_FMT_PEM );
-
-/*
-	ssl_ctx = SSL_CTX_new( SSLv23_client_method() );
-	if( !conf->insecure ) {
-		SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
-		SSL_CTX_set_verify_depth(ssl_ctx, 0);
-	}
-*/
+	ret = gnutls_certificate_set_x509_system_trust( xcred );
+	printf("ret = %d (%s)\n", ret, gnutls_strerror(ret));
 
 	done_startup = 1;
 }
 
 int ssl_connect( tcp_t *tcp, char *hostname, char *message )
 {
-	int ret;
+	int ret = -1;
+	int type;
+	unsigned status;
+	gnutls_datum_t out;
 
 	ssl_startup();
 	gnutls_init( &tcp->ssl, GNUTLS_CLIENT );
+	gnutls_server_name_set( tcp->ssl, GNUTLS_NAME_DNS,
+				hostname, strlen( hostname ) );
 	gnutls_set_default_priority( tcp->ssl );
 	gnutls_credentials_set( tcp->ssl, GNUTLS_CRD_CERTIFICATE, xcred );
 	gnutls_transport_set_int( tcp->ssl, tcp->fd );
 	gnutls_handshake_set_timeout( tcp->ssl, GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT );
 
-	for( ; ; ) {
-		ret = gnutls_handshake( tcp->ssl );
+	if( !conf->insecure ) {
+		gnutls_session_set_verify_cert( tcp->ssl, hostname, 0 );
+	}
 
-		if( ret >= 0 ) {
-			return 1;
-		}
+	while ( ( ret = gnutls_handshake( tcp->ssl ) ) < 0 ) {
 
 		if( gnutls_error_is_fatal( ret ) ) {
-			fprintf(stderr, "*** Handshake failed\n");
+			fprintf(stderr, "*** Handshake failed: %d\n", ret);
 			gnutls_perror( ret );
 			close( tcp->fd );
 			tcp->fd = -1;
@@ -83,6 +87,23 @@ int ssl_connect( tcp_t *tcp, char *hostname, char *message )
 			return 0;
 		}
 	}
+
+        /* check certificate verification status */
+	if( !conf->insecure ) {
+		type = gnutls_certificate_type_get( tcp->ssl );
+		status = gnutls_session_get_verify_cert_status( tcp->ssl );
+		ret = gnutls_certificate_verification_status_print(status, type,
+				&out, 0);
+		if( ret < 0 ) {
+			printf( "Error\n" );
+			return GNUTLS_E_CERTIFICATE_ERROR;
+		}
+
+		printf( "OUT: %s\n", out.data );
+		gnutls_free( out.data );
+	}
+
+	return 1;
 }
 
 int ssl_read( tcp_t *tcp, void *buf, int bytes )
