@@ -24,7 +24,11 @@
 
 /* SSL interface */
 
-typedef gnutls_session_t ssl_t;    /* GnuTLS implementation */
+typedef struct {
+	gnutls_session_t      session;
+	gnutls_typed_vdata_st hostinfo;
+	unsigned int          status;
+} ssl_t;
 
 typedef struct tcp_t tcp_t;
 

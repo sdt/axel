@@ -138,7 +138,6 @@ void tcp_close( tcp_t *tcp )
 		else
 			close(tcp->fd);
 		tcp->fd = -1;
-		tcp->ssl = NULL;
 	}
 }
 
