@@ -24,7 +24,7 @@
 
 /* SSL interface */
 
-typedef SSL ssl_t;    /* OpenSSL implementation */
+typedef int ssl_t;    /* OpenSSL implementation */
 
 void ssl_init( conf_t *conf );
 ssl_t* ssl_connect( int fd, char *message );

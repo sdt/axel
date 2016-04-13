@@ -20,6 +20,8 @@
 
 /* TCP control include file */
 
+typedef int SSL;
+
 typedef struct {
 	int    fd;
 	ssl_t *ssl;
