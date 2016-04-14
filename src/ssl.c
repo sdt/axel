@@ -50,10 +50,8 @@ void ssl_startup( void )
 */
 }
 
-SSL* ssl_connect( int fd, char *message )
+int ssl_connect( ssl_t *ssl, int fd, char *hostname, char *message )
 {
-	SSL* ssl = NULL;
-
 /*
 	ssl_startup();
 
@@ -67,7 +65,7 @@ SSL* ssl_connect( int fd, char *message )
 	}
 */
 
-	return ssl;
+	return 0;
 }
 
 int ssl_read( ssl_t *ssl, void *buf, int bytes )
@@ -80,7 +78,7 @@ int ssl_write( ssl_t *ssl, void *buf, int bytes )
 	return 0;
 }
 
-void ssl_disconnect( SSL *ssl )
+void ssl_disconnect( ssl_t *ssl )
 {
 /*
 	SSL_shutdown( ssl );
@@ -88,7 +86,7 @@ void ssl_disconnect( SSL *ssl )
 */
 }
 
-//https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-NSS.html
+// https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-NSS.html
 
 // NSPR include files
 #include <prerror.h>
@@ -242,4 +240,29 @@ if (SSL_ForceHandshake(nspr) != SECSuccess) {
 	    err, PR_ErrorToName(err));
   exit(1);
 }
+char buf[4096];
+snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host);
+PRInt32 ret = PR_Write(nspr, buf, strlen(buf));
+if (ret < 0) {
+  const PRErrorCode err = PR_GetError();
+  fprintf(stderr, "error: PR_Write error %d: %s\n",
+	    err, PR_ErrorToName(err));
+  exit(1);
+}
+ret = PR_Read(nspr, buf, sizeof(buf));
+if (ret < 0) {
+  const PRErrorCode err = PR_GetError();
+  fprintf(stderr, "error: PR_Read error %d: %s\n",
+	    err, PR_ErrorToName(err));
+  exit(1);
+}
+// Send close_notify alert.
+if (PR_Shutdown(nspr, PR_SHUTDOWN_BOTH) != PR_SUCCESS) {
+  const PRErrorCode err = PR_GetError();
+  fprintf(stderr, "error: PR_Read error %d: %s\n",
+	    err, PR_ErrorToName(err));
+  exit(1);
+}
+// Closes the underlying POSIX file descriptor, too.
+PR_Close(nspr);
 }

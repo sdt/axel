@@ -20,11 +20,10 @@
 
 /* TCP control include file */
 
-typedef int SSL;
-
-typedef struct {
-	int    fd;
-	ssl_t *ssl;
+typedef struct tcp_t {
+	int	is_secure;
+	int	fd;
+	ssl_t	ssl;
 } tcp_t;
 
 int tcp_connect( tcp_t *tcp, char *hostname, int port, int secure, char *local_if, char *message );

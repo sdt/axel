@@ -24,10 +24,16 @@
 
 /* SSL interface */
 
-typedef int ssl_t;    /* OpenSSL implementation */
+typedef struct PRFileDesc PRFileDesc;
+
+typedef struct {
+	PRFileDesc *session;
+	char        message[MAX_STRING];
+} ssl_t;
+
 
 void ssl_init( conf_t *conf );
-ssl_t* ssl_connect( int fd, char *message );
+int ssl_connect( ssl_t *ssl, int fd, char *hostname, char *message );
 int ssl_read( ssl_t *ssl, void *buf, int bytes );
 int ssl_write( ssl_t *ssl, void *buf, int bytes );
 void ssl_disconnect( ssl_t *ssl );
