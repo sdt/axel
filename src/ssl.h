@@ -31,9 +31,8 @@ typedef struct {
 	char        message[MAX_STRING];
 } ssl_t;
 
-
 void ssl_init( conf_t *conf );
 int ssl_connect( ssl_t *ssl, int fd, char *hostname, char *message );
 int ssl_read( ssl_t *ssl, void *buf, int bytes );
 int ssl_write( ssl_t *ssl, void *buf, int bytes );
-void ssl_disconnect( ssl_t *ssl );
+int ssl_disconnect( ssl_t *ssl );

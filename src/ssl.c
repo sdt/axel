@@ -26,19 +26,41 @@
 
 #include "axel.h"
 
+// NSPR include files
+#include <prerror.h>
+#include <prinit.h>
+
+// NSS include files
+#include <nss/nss.h>
+#include <nss/pk11pub.h>
+#include <nss/secmod.h>
+#include <nss/ssl.h>
+#include <nss/sslproto.h>
+
 static conf_t *conf = NULL;
+static int done_init = 0;
+
+static int ssl_error( ssl_t *ssl );
 
 void ssl_init( conf_t *global_conf )
 {
 	conf = global_conf;
 }
 
-void ssl_startup( void )
+static int ssl_startup( ssl_t *ssl )
 {
-/*
-	if( ssl_ctx != NULL )
-		return;
+	if( done_init )
+		return 1;
 
+	PR_Init( PR_USER_THREAD, PR_PRIORITY_NORMAL, 0 );
+	if( NSS_NoDB_Init( "." ) != SECSuccess ) {
+		return ssl_error( ssl );
+	}
+
+	done_init = 1;
+
+	return 1;
+/*
 	SSL_library_init();
 	SSL_load_error_strings();
 
@@ -52,9 +74,11 @@ void ssl_startup( void )
 
 int ssl_connect( ssl_t *ssl, int fd, char *hostname, char *message )
 {
-/*
-	ssl_startup();
+	if( !ssl_startup( ssl ) ) {
+		return 0;
+	}
 
+/*
 	ssl = SSL_new( ssl_ctx );
 	SSL_set_fd( ssl, fd );
 
@@ -70,35 +94,36 @@ int ssl_connect( ssl_t *ssl, int fd, char *hostname, char *message )
 
 int ssl_read( ssl_t *ssl, void *buf, int bytes )
 {
-    return 0;
+	return PR_Read( ssl->session, buf, bytes );
 }
 
 int ssl_write( ssl_t *ssl, void *buf, int bytes )
 {
-	return 0;
+	return PR_Write( ssl->session, buf, bytes );
 }
 
-void ssl_disconnect( ssl_t *ssl )
+int ssl_disconnect( ssl_t *ssl )
 {
 /*
-	SSL_shutdown( ssl );
-	SSL_free( ssl );
+	if( PR_Shutdown( ssl->session, PR_SHUTDOWN_BOTH ) != PR_SUCCESS ) {
+		return ssl_error( ssl );
+	}
+	PR_Close( ssl->session );
 */
+	return 1;
+}
+
+static int ssl_error( ssl_t *ssl )
+{
+	const PRErrorCode error = PR_GetError();
+	fprintf( stderr, "%s: (%d) %s\n",
+	          _("SSL Error"), error, PR_ErrorToName( error ) );
+	snprintf( ssl->message, sizeof( ssl->message ), "%s: (%d) %s\n",
+	          _("SSL Error"), error, PR_ErrorToName( error ) );
+	return 1;
 }
 
 // https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-NSS.html
-
-// NSPR include files
-#include <prerror.h>
-#include <prinit.h>
-
-// NSS include files
-#include <nss/nss.h>
-#include <nss/pk11pub.h>
-#include <nss/secmod.h>
-#include <nss/ssl.h>
-#include <nss/sslproto.h>
-
 // Private API, no other way to turn a POSIX file descriptor into an
 // NSPR handle.
 NSPR_API(PRFileDesc*) PR_ImportTCPSocket(int);
