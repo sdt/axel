@@ -28,5 +28,5 @@ services:
             context: ./vsftpd
         image: axel-testing/vsftpd
         ports:
-            - "10021:21"
+            - "10990:990"
             - "30000-30009:30000-30009"
