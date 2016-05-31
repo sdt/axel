@@ -1,0 +1,64 @@
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+	echo usage: $0 common-name
+	exit 1
+fi
+
+ROOT_NAME=ca
+ROOT_KEY=$ROOT_NAME.key
+ROOT_CERT=$ROOT_NAME.pem
+ROOT_SERIAL=$ROOT_NAME.serial
+ROOT_DAYS=100000
+
+SERVER_NAME="$1"
+SERVER_KEY=$SERVER_NAME.key
+SERVER_CERT=$SERVER_NAME.crt
+SERVER_DAYS=$ROOT_DAYS
+
+make-config() {
+	local CN="$1"
+	cat <<-END_CONFIG
+		[ req ]
+		prompt                 = no
+		distinguished_name     = req_distinguished_name
+
+		[ req_distinguished_name ]
+		C                      = AU
+		ST                     = Victoria
+		L                      = Melbourne
+		O                      = Axel
+		OU                     = Development
+		CN                     = $CN
+		emailAddress           = axel-testing@example.com
+	END_CONFIG
+}
+
+if [[ ! -e $ROOT_SERIAL ]]; then
+	echo "*** Creating serial file"
+	echo 1000 > $ROOT_SERIAL
+fi
+
+if [[ ! -e $ROOT_KEY ]]; then
+	echo "*** Creating root key"
+	openssl genrsa -out $ROOT_KEY 2048
+fi
+
+# Create the root cert
+if [[ ! -e $ROOT_CERT ]]; then
+	echo "*** Creating root cert"
+	openssl req -x509 -new -nodes -key $ROOT_KEY -sha256 -days $ROOT_DAYS -out $ROOT_CERT -config <( make-config $ROOT_NAME )
+fi
+
+# Create the server key
+if [[ ! -e $SERVER_KEY ]]; then
+	echo "*** Creating $SERVER_NAME key"
+	openssl genrsa -out $SERVER_KEY 2048
+fi
+
+# Create the certificate signing request, and then sign it
+if [[ ! -e $SERVER_CERT ]]; then
+	echo "*** Creating $SERVER_NAME cert"
+	openssl req -new -key $SERVER_KEY -config <( make-config $SERVER_NAME ) | \
+		openssl x509 -req -CA $ROOT_CERT -CAkey $ROOT_KEY -CAserial $ROOT_SERIAL -out $SERVER_CERT -days $SERVER_DAYS -sha256
+fi
