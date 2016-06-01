@@ -26,5 +26,17 @@ server {
 		# First attempt to serve request as file, then
 		# as directory, then fall back to displaying a 404.
 		try_files $uri $uri/ =404;
+
+    # Provide redirect paths to different protocols for testing.
+    #   axel.testing/redirect/$PROTO/$PATH -> $PROTO://axel.testing/$PATH
+    #
+    # eg. https://axel.testing/redirect/ftp/kilobyte.txt
+    #       redirects to
+    #     ftp://axel.testing/kilobyte.txt
+    #
+    rewrite ^/redirect/http/(.*)$   http://axel.testing/$1  redirect;
+    rewrite ^/redirect/https/(.*)$  https://axel.testing/$1 redirect;
+    rewrite ^/redirect/ftp/(.*)$    ftp://axel.testing/$1   redirect;
+    rewrite ^/redirect/ftps/(.*)$   ftps://axel.testing/$1  redirect;
 	}
 }
