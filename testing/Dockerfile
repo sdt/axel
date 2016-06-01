@@ -13,6 +13,12 @@ RUN sed -i -e "s!http://archive\.ubuntu\.com/ubuntu/!$APT_MIRROR!" \
         supervisor \
  && true
 
+COPY certs/axel.testing.crt certs/ca.pem /etc/ssl/certs/
+COPY certs/axel.testing.key /etc/ssl/private/
+
 COPY image/ /
+
+EXPOSE 80 443
+VOLUME /etc/ssl/certs
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
