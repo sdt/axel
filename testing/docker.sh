@@ -3,7 +3,7 @@ IMAGE=axel-testing
 
 HOST=axel.testing
 
-RUNTIME="-h $HOST $IMAGE"
+RUNTIME="--name $HOST --hostname $HOST $IMAGE"
 
 case $1 in
 
@@ -13,12 +13,23 @@ case $1 in
 
     run)
         shift
-        docker run --rm -p 10080:80 -p 10443:443 $RUNTIME "$@"
+        docker run --rm \
+            -p 21:21 \
+            -p 80:80 \
+            -p 443:443 \
+            -p 990:990 \
+            -p 9991-9995:9991-9995 \
+            $RUNTIME "$@"
         ;;
 
     sh)
         shift
         docker run -ti --rm $RUNTIME /bin/bash
+        ;;
+
+    exec)
+        shift
+        docker exec -ti $HOST "$@"
         ;;
 
     *)

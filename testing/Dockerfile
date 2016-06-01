@@ -19,7 +19,7 @@ COPY certs/ca.pem /etc/ssl/certs/
 COPY certs/axel.testing.pem /etc/ssl/private/
 COPY image/ /
 
-EXPOSE 80 443 990 991 992 993 994 995
+EXPOSE 21 80 443 990 9991-9995
 VOLUME /etc/ssl/certs
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
