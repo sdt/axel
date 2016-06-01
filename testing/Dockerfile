@@ -11,14 +11,15 @@ RUN sed -i -e "s!http://archive\.ubuntu\.com/ubuntu/!$APT_MIRROR!" \
         ca-certificates \
         nginx \
         supervisor \
+        vsftpd \
+ && mkdir -p /var/run/vsftpd/empty \
  && true
 
 COPY certs/ca.pem /etc/ssl/certs/
 COPY certs/axel.testing.pem /etc/ssl/private/
-
 COPY image/ /
 
-EXPOSE 80 443
+EXPOSE 80 443 990 991 992 993 994 995
 VOLUME /etc/ssl/certs
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
