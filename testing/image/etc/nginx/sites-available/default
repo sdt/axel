@@ -6,8 +6,8 @@ server {
 	#
 	listen 443 ssl default_server;
 	listen [::]:443 ssl default_server;
-	ssl_certificate /etc/ssl/certs/axel.testing.crt;
-	ssl_certificate_key /etc/ssl/private/axel.testing.key;
+	ssl_certificate /etc/ssl/private/axel.testing.pem;
+	ssl_certificate_key /etc/ssl/private/axel.testing.pem;
 
 	# Note: You should disable gzip for SSL traffic.
 	# See: https://bugs.debian.org/773332

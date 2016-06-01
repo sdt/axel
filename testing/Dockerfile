@@ -13,8 +13,8 @@ RUN sed -i -e "s!http://archive\.ubuntu\.com/ubuntu/!$APT_MIRROR!" \
         supervisor \
  && true
 
-COPY certs/axel.testing.crt certs/ca.pem /etc/ssl/certs/
-COPY certs/axel.testing.key /etc/ssl/private/
+COPY certs/ca.pem /etc/ssl/certs/
+COPY certs/axel.testing.pem /etc/ssl/private/
 
 COPY image/ /
 

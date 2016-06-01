@@ -12,8 +12,7 @@ ROOT_SERIAL=$ROOT_NAME.serial
 ROOT_DAYS=100000
 
 SERVER_NAME="$1"
-SERVER_KEY=$SERVER_NAME.key
-SERVER_CERT=$SERVER_NAME.crt
+SERVER_PEM=$SERVER_NAME.pem
 SERVER_DAYS=$ROOT_DAYS
 
 make-config() {
@@ -51,14 +50,11 @@ if [[ ! -e $ROOT_CERT ]]; then
 fi
 
 # Create the server key
-if [[ ! -e $SERVER_KEY ]]; then
+if [[ ! -e $SERVER_PEM ]]; then
 	echo "*** Creating $SERVER_NAME key"
-	openssl genrsa -out $SERVER_KEY 2048
-fi
+	openssl genrsa -out $SERVER_PEM 2048
 
-# Create the certificate signing request, and then sign it
-if [[ ! -e $SERVER_CERT ]]; then
 	echo "*** Creating $SERVER_NAME cert"
-	openssl req -new -key $SERVER_KEY -config <( make-config $SERVER_NAME ) | \
-		openssl x509 -req -CA $ROOT_CERT -CAkey $ROOT_KEY -CAserial $ROOT_SERIAL -out $SERVER_CERT -days $SERVER_DAYS -sha256
+	openssl req -new -key $SERVER_PEM -config <( make-config $SERVER_NAME ) | \
+		openssl x509 -req -CA $ROOT_CERT -CAkey $ROOT_KEY -CAserial $ROOT_SERIAL -days $SERVER_DAYS -sha256 >> $SERVER_PEM
 fi
