@@ -1,5 +1,8 @@
 FROM ubuntu:xenial
 
+# Had to add this to get the 172.2.0.x addresses to route to the virtualbox vm
+#   sudo route -n add 172.17.0.0/24 $( dm ip )
+
 # Specify a local apt mirror to speed up builds.
 # eg. docker build --build-arg APT_MIRROR=http://br.archive.ubuntu.com/ubuntu/
 ARG APT_MIRROR=&
