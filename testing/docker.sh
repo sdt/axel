@@ -23,6 +23,11 @@ case $1 in
             $RUNTIME "$@"
         ;;
 
+    debug)
+        shift
+        docker run -ti --rm --link $HOST -v $PWD:/debug -w /debug $IMAGE "$@"
+        ;;
+
     sh)
         shift
         docker run -ti --rm $RUNTIME /bin/bash
