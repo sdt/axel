@@ -10,8 +10,9 @@ RUN sed -i -e "s!http://archive\.ubuntu\.com/ubuntu/!$APT_MIRROR!" \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         ca-certificates \
         nginx \
+        supervisor \
  && true
 
 COPY image/ /
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
