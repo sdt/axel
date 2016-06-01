@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+  echo usage: $0 filesize
+  exit 1
+fi
+
+SIZE=$1
+
+export LC_CTYPE=C
+tr -cd 'a-zA-Z0-9' < /dev/urandom | fold -w 78 | head -c $SIZE
